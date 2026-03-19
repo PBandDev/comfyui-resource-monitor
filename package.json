@@ -1,0 +1,37 @@
+{
+  "name": "comfyui-resource-monitor",
+  "version": "1.0.0",
+  "description": "A ComfyUI-native live resource monitor and snapshot node",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc && vite build --watch",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "comfyui",
+    "custom node",
+    "extension",
+    "resource monitor"
+  ],
+  "author": "PBandDev",
+  "license": "AGPL-3.0",
+  "packageManager": "pnpm@10.17.1",
+  "devDependencies": {
+    "@comfyorg/comfyui-frontend-types": "^1.32.1",
+    "@types/node": "^24.10.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "jsdom": "^29.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vitest": "^4.0.16"
+  },
+  "pnpm": {
+    "overrides": {
+      "rollup": "^4.59.0"
+    }
+  }
+}
