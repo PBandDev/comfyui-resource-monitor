@@ -8,6 +8,7 @@ license = { file = "LICENSE" }
 dependencies = [
     "nvidia-ml-py>=13.590.48",
     "psutil>=7.2.2",
+    "WMI>=1.5.1; platform_system == 'Windows'",
 ]
 
 [dependency-groups]

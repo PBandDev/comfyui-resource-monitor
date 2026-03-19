@@ -47,6 +47,7 @@ def test_compute_cpu_percent_uses_own_delta():
     """Verify compute_cpu_percent tracks its own cpu_times deltas
     instead of relying on psutil.cpu_percent global state."""
     collector = ResourceCollector()
+    collector._windows_cpu_reader = None
 
     # Simulate: baseline 100s user, 50s system, 850s idle (10% busy at t=0)
     collector._prev_cpu_times = CpuTimes(user=100, system=50, idle=850)
@@ -71,6 +72,7 @@ def test_compute_cpu_percent_uses_own_delta():
 
 def test_compute_cpu_percent_clamps_to_0_100():
     collector = ResourceCollector()
+    collector._windows_cpu_reader = None
 
     # Zero delta -> 0%
     collector._prev_cpu_times = CpuTimes(user=100, system=50, idle=850)
@@ -83,6 +85,45 @@ def test_compute_cpu_percent_clamps_to_0_100():
         collector_module.psutil.cpu_times = original
 
     assert result == 0.0
+
+
+def test_compute_cpu_percent_prefers_windows_utility_reader(monkeypatch):
+    collector = ResourceCollector()
+
+    class FakeUtilityReader:
+        def sample_percent(self):
+            return 27.25
+
+    collector._windows_cpu_reader = FakeUtilityReader()
+    monkeypatch.setattr(
+        collector_module.psutil,
+        "cpu_times",
+        lambda: (_ for _ in ()).throw(AssertionError("fallback should not run")),
+    )
+
+    result = collector.compute_cpu_percent()
+
+    assert result == 27.25
+
+
+def test_compute_cpu_percent_falls_back_when_windows_utility_reader_has_no_data():
+    collector = ResourceCollector()
+
+    class FakeUtilityReader:
+        def sample_percent(self):
+            return None
+
+    collector._windows_cpu_reader = FakeUtilityReader()
+    collector._prev_cpu_times = CpuTimes(user=100, system=50, idle=850)
+
+    original = collector_module.psutil.cpu_times
+    collector_module.psutil.cpu_times = lambda: CpuTimes(user=105, system=53, idle=852)
+    try:
+        result = collector.compute_cpu_percent()
+    finally:
+        collector_module.psutil.cpu_times = original
+
+    assert result == 80.0
 
 
 def test_sample_uses_compute_cpu_percent(monkeypatch):

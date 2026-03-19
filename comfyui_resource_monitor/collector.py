@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import time
 from typing import Any
 
@@ -12,11 +13,58 @@ try:
 except ImportError:  # pragma: no cover - exercised via runtime fallback
     pynvml = None
 
+try:
+    import wmi
+except ImportError:  # pragma: no cover - exercised via runtime fallback
+    wmi = None
+
+
+class WindowsCpuUtilityReader:
+    def __init__(self, client: Any) -> None:
+        self._client = client
+        self._names = ("_Total", "0,_Total")
+        self._disabled = False
+
+    def sample_percent(self) -> float | None:
+        if self._disabled:
+            return None
+
+        try:
+            for name in self._names:
+                rows = self._client.Win32_PerfFormattedData_Counters_ProcessorInformation(
+                    Name=name,
+                )
+                if not rows:
+                    continue
+
+                utility = getattr(rows[0], "PercentProcessorUtility", None)
+                if utility is None:
+                    continue
+
+                return max(0.0, min(float(utility), 100.0))
+        except Exception:
+            self._disabled = True
+            return None
+
+        return None
+
 
 class ResourceCollector:
     def __init__(self) -> None:
         self._gpu_handle = self._init_gpu_handle()
         self._prev_cpu_times = psutil.cpu_times()
+        self._windows_cpu_reader = self._init_windows_cpu_reader()
+
+    def _init_windows_cpu_reader(self) -> WindowsCpuUtilityReader | None:
+        if sys.platform != "win32" or wmi is None:
+            return None
+
+        try:
+            client = wmi.WMI(namespace="root\\cimv2")
+        except Exception:
+            return None
+
+        return WindowsCpuUtilityReader(client)
 
     def _init_gpu_handle(self) -> Any | None:
         if pynvml is None:
@@ -36,7 +84,15 @@ class ResourceCollector:
         Unlike psutil.cpu_percent(interval=None) which uses module-level
         global state (contaminated if any other code calls it), this tracks
         its own previous sample for accurate delta computation.
+
+        On Windows, prefer Task Manager-aligned Processor Utility when WMI
+        telemetry is available. Fall back to cpu_times deltas everywhere else.
         """
+        if self._windows_cpu_reader is not None:
+            utility_percent = self._windows_cpu_reader.sample_percent()
+            if utility_percent is not None:
+                return utility_percent
+
         current = psutil.cpu_times()
         prev = self._prev_cpu_times
         self._prev_cpu_times = current
