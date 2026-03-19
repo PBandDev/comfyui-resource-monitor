@@ -1,4 +1,5 @@
 import sys
+from collections import namedtuple
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -13,6 +14,9 @@ class DummyMemory:
     total = 16 * 1024 * 1024 * 1024
     used = 8 * 1024 * 1024 * 1024
     percent = 50.0
+
+
+CpuTimes = namedtuple("CpuTimes", ["user", "system", "idle"])
 
 
 def test_collector_returns_gpu_fallback_when_gpu_is_unavailable():
@@ -39,11 +43,53 @@ def test_collector_returns_gpu_fallback_when_gpu_is_unavailable():
     assert snapshot.gpu_temp_celsius == 0.0
 
 
-def test_sample_uses_psutil_and_returns_normalized_snapshot(monkeypatch):
+def test_compute_cpu_percent_uses_own_delta():
+    """Verify compute_cpu_percent tracks its own cpu_times deltas
+    instead of relying on psutil.cpu_percent global state."""
+    collector = ResourceCollector()
+
+    # Simulate: baseline 100s user, 50s system, 850s idle (10% busy at t=0)
+    collector._prev_cpu_times = CpuTimes(user=100, system=50, idle=850)
+
+    # After 10s: 105s user (+5), 53s system (+3), 852s idle (+2)
+    # Delta: busy=8, idle=2, total=10 -> 80% CPU
+    call_count = [0]
+    def fake_cpu_times():
+        call_count[0] += 1
+        return CpuTimes(user=105, system=53, idle=852)
+
+    original = collector_module.psutil.cpu_times
+    collector_module.psutil.cpu_times = fake_cpu_times
+    try:
+        result = collector.compute_cpu_percent()
+    finally:
+        collector_module.psutil.cpu_times = original
+
+    assert result == 80.0
+    assert call_count[0] == 1
+
+
+def test_compute_cpu_percent_clamps_to_0_100():
+    collector = ResourceCollector()
+
+    # Zero delta -> 0%
+    collector._prev_cpu_times = CpuTimes(user=100, system=50, idle=850)
+
+    original = collector_module.psutil.cpu_times
+    collector_module.psutil.cpu_times = lambda: CpuTimes(user=100, system=50, idle=850)
+    try:
+        result = collector.compute_cpu_percent()
+    finally:
+        collector_module.psutil.cpu_times = original
+
+    assert result == 0.0
+
+
+def test_sample_uses_compute_cpu_percent(monkeypatch):
     collector = ResourceCollector()
 
     monkeypatch.setattr(collector_module.time, "time", lambda: 456.0)
-    monkeypatch.setattr(collector_module.psutil, "cpu_percent", lambda interval=None: 27.5)
+    monkeypatch.setattr(collector, "compute_cpu_percent", lambda: 27.5)
     monkeypatch.setattr(collector_module.psutil, "virtual_memory", lambda: DummyMemory())
     monkeypatch.setattr(collector, "get_gpu_payload", lambda: None)
 

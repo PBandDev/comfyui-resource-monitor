@@ -8,7 +8,6 @@ export const SETTINGS_IDS = {
   VERSION: `${SETTINGS_PREFIX}.About`,
   DEBUG_LOGGING: `${SETTINGS_PREFIX}.Debug Logging`,
   DISPLAY_MODE: `${SETTINGS_PREFIX}.Display Mode`,
-  EXPANDED_BY_DEFAULT: `${SETTINGS_PREFIX}.Expanded By Default`,
   REFRESH_RATE: `${SETTINGS_PREFIX}.Refresh Rate`,
   SMOOTH_TRANSITIONS: `${SETTINGS_PREFIX}.Smooth Transitions`,
   TEXT_DENSITY: `${SETTINGS_PREFIX}.Text Density`,

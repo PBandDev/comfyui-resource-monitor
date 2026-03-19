@@ -19,7 +19,6 @@ export interface ResourceSnapshot {
 
 export interface ResourceMonitorSettingsValues {
   displayMode: DisplayMode;
-  expandedByDefault: boolean;
   refreshRate: number;
   smoothTransitions: boolean;
   textDensity: TextDensity;

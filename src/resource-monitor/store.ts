@@ -1,4 +1,4 @@
-import { formatMetricValue } from "./format";
+import { formatMetricValue, formatTooltip } from "./format";
 import type {
   DisplayMode,
   MetricKey,
@@ -29,23 +29,20 @@ export interface MetricRow {
   label: string;
   percent: number;
   text: string;
+  tooltip: string;
 }
 
 export function resolveExpandedState(
   previousExpanded: boolean,
   previousMode: DisplayMode | null,
-  nextSettings: Pick<ResourceMonitorSettingsValues, "displayMode" | "expandedByDefault">,
+  nextDisplayMode: DisplayMode,
 ): boolean {
   if (previousMode === null) {
-    return nextSettings.displayMode === "collapsed"
-      ? nextSettings.expandedByDefault
-      : true;
+    return nextDisplayMode !== "collapsed";
   }
 
-  if (nextSettings.displayMode !== previousMode) {
-    return nextSettings.displayMode === "collapsed"
-      ? nextSettings.expandedByDefault
-      : true;
+  if (nextDisplayMode !== previousMode) {
+    return nextDisplayMode !== "collapsed";
   }
 
   return previousExpanded;
@@ -146,5 +143,6 @@ export function selectMetricRows(
       label: definition.label,
       percent: metricPercent(definition.key, snapshot),
       text: formatMetricValue(definition.key, snapshot, settings.textDensity),
+      tooltip: formatTooltip(definition.key, snapshot),
     }));
 }

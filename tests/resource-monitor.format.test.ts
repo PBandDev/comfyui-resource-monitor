@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatMetricValue,
   formatPercent,
+  formatTooltip,
   formatUsagePair,
 } from "../src/resource-monitor/format";
 import type { ResourceSnapshot } from "../src/resource-monitor/types";
@@ -40,5 +41,36 @@ describe("resource monitor formatters", () => {
   it("formats cpu and ram values from the shared snapshot shape", () => {
     expect(formatMetricValue("cpu", snapshot, "compact")).toBe("12%");
     expect(formatMetricValue("ram", snapshot, "detailed")).toBe("2.0 / 4.0 GiB");
+  });
+
+  it("formats gpu temp with degree symbol when available", () => {
+    const gpuSnapshot: ResourceSnapshot = {
+      ...snapshot,
+      gpu_available: true,
+      gpu_temp_celsius: 65,
+    };
+    expect(formatMetricValue("gpuTemp", gpuSnapshot, "compact")).toBe("65\u00B0C");
+  });
+
+  it("generates tooltips with full detail for each metric", () => {
+    expect(formatTooltip("cpu", snapshot)).toBe("CPU Usage: 12.3%");
+    expect(formatTooltip("ram", snapshot)).toBe("RAM: 2.0 / 4.0 GiB (50.0%)");
+    expect(formatTooltip("gpu", snapshot)).toBe("GPU: Not available");
+  });
+
+  it("generates tooltips with GPU name when available", () => {
+    const gpuSnapshot: ResourceSnapshot = {
+      ...snapshot,
+      gpu_available: true,
+      gpu_name: "RTX 4090",
+      gpu_percent: 42.5,
+      vram_used_bytes: 8 * 1024 ** 3,
+      vram_total_bytes: 24 * 1024 ** 3,
+      vram_percent: 33.3,
+      gpu_temp_celsius: 65.7,
+    };
+    expect(formatTooltip("gpu", gpuSnapshot)).toBe("RTX 4090: 42.5%");
+    expect(formatTooltip("vram", gpuSnapshot)).toBe("VRAM: 8.0 / 24.0 GiB (33.3%)");
+    expect(formatTooltip("gpuTemp", gpuSnapshot)).toBe("GPU Temperature: 65.7\u00B0C");
   });
 });

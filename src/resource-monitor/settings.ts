@@ -58,7 +58,6 @@ export type ResourceMonitorSettingDefinition =
 
 export const DEFAULT_SETTINGS: ResourceMonitorSettingsValues = {
   displayMode: "top",
-  expandedByDefault: false,
   refreshRate: 1,
   smoothTransitions: true,
   textDensity: "compact",
@@ -138,14 +137,6 @@ export function createResourceMonitorSettings(
       type: "combo",
       defaultValue: DEFAULT_SETTINGS.displayMode,
       options: DISPLAY_MODE_OPTIONS,
-      onChange: handleSettingChange,
-    },
-    {
-      id: SETTINGS_IDS.EXPANDED_BY_DEFAULT,
-      name: "Expanded By Default",
-      category: [SETTINGS_PREFIX, "Display", "Expanded By Default"],
-      type: "boolean",
-      defaultValue: DEFAULT_SETTINGS.expandedByDefault,
       onChange: handleSettingChange,
     },
     {

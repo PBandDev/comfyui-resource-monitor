@@ -39,11 +39,6 @@ function readSetting<TValue>(app: ComfyApp, id: string, fallback: TValue): TValu
 function readMonitorSettings(app: ComfyApp): ResourceMonitorSettingsValues {
   return {
     displayMode: readSetting(app, SETTINGS_IDS.DISPLAY_MODE, DEFAULT_SETTINGS.displayMode),
-    expandedByDefault: readSetting(
-      app,
-      SETTINGS_IDS.EXPANDED_BY_DEFAULT,
-      DEFAULT_SETTINGS.expandedByDefault,
-    ),
     refreshRate: readSetting(app, SETTINGS_IDS.REFRESH_RATE, DEFAULT_SETTINGS.refreshRate),
     smoothTransitions: readSetting(
       app,
@@ -90,7 +85,7 @@ export function mountResourceMonitor(
   let currentSnapshot: ResourceSnapshot | null = null;
   let currentSettings = readMonitorSettings(app);
   let currentDisplayMode: ResourceMonitorSettingsValues["displayMode"] | null = null;
-  let isExpanded = resolveExpandedState(false, null, currentSettings);
+  let isExpanded = resolveExpandedState(false, null, currentSettings.displayMode);
   let layoutRefreshQueued = false;
 
   const dom = createResourceMonitorDom({
@@ -104,7 +99,7 @@ export function mountResourceMonitor(
     isExpanded = resolveExpandedState(
       isExpanded,
       currentDisplayMode,
-      currentSettings,
+      currentSettings.displayMode,
     );
     currentDisplayMode = currentSettings.displayMode;
     renderMonitor(currentSettings, dom, currentSnapshot, isExpanded);
@@ -156,6 +151,7 @@ export function mountResourceMonitor(
   return () => {
     unsubscribe();
     layoutObserver.disconnect();
+    dom.dispose();
     dom.attachTo(null);
     dom.root.remove();
   };

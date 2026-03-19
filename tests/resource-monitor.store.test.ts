@@ -63,35 +63,24 @@ describe("resource monitor store", () => {
     expect(rows.find((row) => row.key === "vram")?.text).toBe("N/A");
     expect(rows.find((row) => row.key === "gpuTemp")?.text).toBe("N/A");
     expect(rows.find((row) => row.key === "cpu")?.percent).toBe(45);
+    expect(rows.find((row) => row.key === "cpu")?.tooltip).toBe("CPU Usage: 45.0%");
+    expect(rows.find((row) => row.key === "gpu")?.tooltip).toBe("GPU: Not available");
   });
 
-  it("preserves collapsed expansion state until display mode changes", () => {
-    expect(
-      resolveExpandedState(false, null, {
-        displayMode: "collapsed",
-        expandedByDefault: false,
-      }),
-    ).toBe(false);
+  it("collapsed always starts closed, top/bottom always starts expanded", () => {
+    // Initial mount in collapsed mode -> closed
+    expect(resolveExpandedState(false, null, "collapsed")).toBe(false);
 
-    expect(
-      resolveExpandedState(true, "collapsed", {
-        displayMode: "collapsed",
-        expandedByDefault: false,
-      }),
-    ).toBe(true);
+    // User manually expanded -> stays expanded
+    expect(resolveExpandedState(true, "collapsed", "collapsed")).toBe(true);
 
-    expect(
-      resolveExpandedState(false, "top", {
-        displayMode: "collapsed",
-        expandedByDefault: true,
-      }),
-    ).toBe(true);
+    // Switch from top to collapsed -> starts closed
+    expect(resolveExpandedState(true, "top", "collapsed")).toBe(false);
 
-    expect(
-      resolveExpandedState(false, "collapsed", {
-        displayMode: "top",
-        expandedByDefault: false,
-      }),
-    ).toBe(true);
+    // Switch from collapsed to top -> starts expanded
+    expect(resolveExpandedState(false, "collapsed", "top")).toBe(true);
+
+    // Initial mount in top mode -> expanded
+    expect(resolveExpandedState(false, null, "top")).toBe(true);
   });
 });

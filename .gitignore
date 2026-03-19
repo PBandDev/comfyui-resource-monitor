@@ -18,3 +18,5 @@ node.zip
 .claude/
 .changeset/
 docs/plans/
+screenshots/
+.playwright-cli/
