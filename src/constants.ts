@@ -3,7 +3,7 @@ export const LOGGING_PREFIX = `[${SETTINGS_PREFIX}]`;
 export const EXTENSION_NAME = "ComfyUI Resource Monitor";
 export const REPOSITORY_URL =
   "https://github.com/PBandDev/comfyui-resource-monitor";
-export const CURRENT_VERSION = "1.0.1";
+export const CURRENT_VERSION = "1.0.2";
 export const SETTINGS_IDS = {
   VERSION: `${SETTINGS_PREFIX}.About`,
   DEBUG_LOGGING: `${SETTINGS_PREFIX}.Debug Logging`,

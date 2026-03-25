@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-resource-monitor"
 description = "A ComfyUI-native live resource monitor and snapshot node"
-version = "1.0.1"
+version = "1.0.2"
 requires-python = ">=3.12"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -28,7 +28,7 @@ requires-comfyui = ">=0.3.0"
 includes = ['dist/']
 
 [tool.bumpversion]
-current_version = "1.0.1"
+current_version = "1.0.2"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = false
