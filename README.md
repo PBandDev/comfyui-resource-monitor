@@ -2,6 +2,8 @@
 
 `comfyui-resource-monitor` adds a simple live resource monitor to ComfyUI and a `Resource Snapshot` node for workflows. Created with [comfyui-custom-node-template](https://github.com/PBandDev/comfyui-custom-node-template).
 
+<img src="assets/top.png" alt="Resource Monitor Preview">
+
 It is designed to feel native to ComfyUI:
 
 - `Top` mode mounts into the workflow action bar
@@ -62,6 +64,8 @@ It captures the machine's current resource state at the point where the node run
 The optional `passthrough` input is forwarded to the `passthrough` output so the node can sit in the middle of a workflow chain.
 
 If GPU telemetry is unavailable, GPU-related numeric outputs fall back to `0` and `gpu_available` is `false`.
+
+<img src="assets/node.png" alt="Resource Monitor Node Preview">
 
 ## Troubleshooting
 
