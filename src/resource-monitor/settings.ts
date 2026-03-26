@@ -66,6 +66,7 @@ export const DEFAULT_SETTINGS: ResourceMonitorSettingsValues = {
   showGpu: true,
   showVram: true,
   showGpuTemp: true,
+  showClearButtons: true,
   debugLogging: false,
 };
 
@@ -208,6 +209,14 @@ export function createResourceMonitorSettings(
       category: [SETTINGS_PREFIX, "Metrics", "GPU Temp"],
       type: "boolean",
       defaultValue: DEFAULT_SETTINGS.showGpuTemp,
+      onChange: handleSettingChange,
+    },
+    {
+      id: SETTINGS_IDS.SHOW_CLEAR_BUTTONS,
+      name: "Show Clear Buttons",
+      category: [SETTINGS_PREFIX, "Display", "Clear Buttons"],
+      type: "boolean",
+      defaultValue: DEFAULT_SETTINGS.showClearButtons,
       onChange: handleSettingChange,
     },
   ];

@@ -231,6 +231,49 @@
   height: 0.25rem;
 }
 
+/* ── Clear controls ── */
+
+.rm-clear-controls {
+  --rm-text: var(--fg-color, #f3f5f7);
+  --rm-muted: color-mix(in srgb, var(--rm-text) 55%, transparent);
+  --rm-fill: var(--p-primary-color, var(--primary-color, #60a5fa));
+  --rm-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 0.15rem;
+}
+
+.rm-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--rm-muted);
+  cursor: pointer;
+  transition: color 150ms var(--rm-ease-out), background 150ms var(--rm-ease-out);
+}
+
+.rm-clear-btn:hover {
+  color: var(--rm-text);
+  background: color-mix(in srgb, var(--rm-text) 10%, transparent);
+}
+
+.rm-clear-btn:focus-visible {
+  outline: 2px solid var(--rm-fill);
+  outline-offset: 2px;
+}
+
+.rm-clear-btn:active {
+  color: var(--rm-text);
+  background: color-mix(in srgb, var(--rm-text) 16%, transparent);
+}
+
 /* ── Reduced motion ── */
 
 @media (prefers-reduced-motion: reduce) {

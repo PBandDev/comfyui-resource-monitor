@@ -38,9 +38,17 @@ Available settings:
 - `Refresh Rate`
 - `Smooth Transitions`
 - `Text Density`: `Compact` or `Detailed`
+- `Show Clear Buttons`: show or hide the `Unload Models` and `Free Memory` toolbar buttons
 - metric toggles for CPU, RAM, GPU, VRAM, and GPU temperature
 
 Changes apply immediately in the UI.
+
+### Clear Controls
+
+Two toolbar buttons appear adjacent to the resource monitor:
+
+- `Unload Models` — unloads currently loaded models from VRAM
+- `Free Memory` — frees all memory, models, and VRAM
 
 ## Resource Snapshot Node
 

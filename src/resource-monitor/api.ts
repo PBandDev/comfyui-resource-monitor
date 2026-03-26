@@ -111,6 +111,27 @@ function parseSnapshotPatch(value: object | null): SnapshotPatch {
   return patch;
 }
 
+const FREE_ROUTE = "/free";
+
+export type ResourceClearAction = "unloadModels" | "freeMemory";
+
+const CLEAR_ACTION_BODIES: Record<ResourceClearAction, Record<string, boolean>> = {
+  unloadModels: { unload_models: true },
+  freeMemory: { free_memory: true },
+};
+
+export async function triggerResourceClearAction(
+  api: ResourceMonitorApiClient,
+  action: ResourceClearAction,
+): Promise<boolean> {
+  const response = await api.fetchApi(FREE_ROUTE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(CLEAR_ACTION_BODIES[action]),
+  });
+  return response.ok;
+}
+
 export async function fetchInitialSnapshot(
   api: ResourceMonitorApiClient,
 ): Promise<SnapshotPatch | null> {

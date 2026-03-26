@@ -7,6 +7,7 @@ import {
   disconnectResourceMonitor,
   fetchInitialSnapshot,
   subscribeToSnapshots,
+  triggerResourceClearAction,
   type ResourceMonitorApiClient,
 } from "../src/resource-monitor/api";
 
@@ -127,6 +128,46 @@ describe("resource monitor api", () => {
         client_id: "client-123",
       }),
     });
+  });
+
+  it("sends the unload_models payload to /free", async () => {
+    const api: ResourceMonitorApiClient = {
+      fetchApi: vi.fn().mockResolvedValue(createJsonResponse({}, true)),
+    };
+
+    const ok = await triggerResourceClearAction(api, "unloadModels");
+
+    expect(ok).toBe(true);
+    expect(api.fetchApi).toHaveBeenCalledWith("/free", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ unload_models: true }),
+    });
+  });
+
+  it("sends the free_memory payload to /free", async () => {
+    const api: ResourceMonitorApiClient = {
+      fetchApi: vi.fn().mockResolvedValue(createJsonResponse({}, true)),
+    };
+
+    const ok = await triggerResourceClearAction(api, "freeMemory");
+
+    expect(ok).toBe(true);
+    expect(api.fetchApi).toHaveBeenCalledWith("/free", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ free_memory: true }),
+    });
+  });
+
+  it("returns false when /free responds with a non-ok status", async () => {
+    const api: ResourceMonitorApiClient = {
+      fetchApi: vi.fn().mockResolvedValue(createJsonResponse({}, false)),
+    };
+
+    const ok = await triggerResourceClearAction(api, "unloadModels");
+
+    expect(ok).toBe(false);
   });
 
   it("subscribes to custom snapshot events through the Comfy api event interface", () => {
