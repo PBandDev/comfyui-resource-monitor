@@ -11,10 +11,12 @@ describe("resource monitor settings", () => {
     expect(SETTINGS_IDS.DISPLAY_MODE).toBe("Resource Monitor.Display Mode");
     expect(SETTINGS_IDS.REFRESH_RATE).toBe("Resource Monitor.Refresh Rate");
     expect(SETTINGS_IDS.SHOW_GPU_TEMP).toBe("Resource Monitor.Show GPU Temp");
+    expect(SETTINGS_IDS.SHOW_CLEAR_BUTTONS).toBe("Resource Monitor.Show Clear Buttons");
 
     expect(DEFAULT_SETTINGS.displayMode).toBe("top");
     expect(DEFAULT_SETTINGS.refreshRate).toBe(1);
     expect(DEFAULT_SETTINGS.showGpuTemp).toBe(true);
+    expect(DEFAULT_SETTINGS.showClearButtons).toBe(true);
   });
 
   it("creates the expected settings collection", () => {
@@ -32,6 +34,7 @@ describe("resource monitor settings", () => {
       SETTINGS_IDS.SHOW_GPU,
       SETTINGS_IDS.SHOW_VRAM,
       SETTINGS_IDS.SHOW_GPU_TEMP,
+      SETTINGS_IDS.SHOW_CLEAR_BUTTONS,
     ]);
     expect(settings.find((setting) => setting.id === SETTINGS_IDS.DISPLAY_MODE))
       .toMatchObject({
@@ -43,6 +46,12 @@ describe("resource monitor settings", () => {
         defaultValue: 1,
         type: "slider",
       });
+    expect(
+      settings.find((setting) => setting.id === SETTINGS_IDS.SHOW_CLEAR_BUTTONS),
+    ).toMatchObject({
+      type: "boolean",
+      defaultValue: true,
+    });
   });
 
   it("wires setting changes to an immediate refresh callback", () => {

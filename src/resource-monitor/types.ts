@@ -27,5 +27,6 @@ export interface ResourceMonitorSettingsValues {
   showGpu: boolean;
   showVram: boolean;
   showGpuTemp: boolean;
+  showClearButtons: boolean;
   debugLogging: boolean;
 }

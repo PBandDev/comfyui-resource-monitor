@@ -111,7 +111,12 @@ function remountResourceMonitor(): void {
 
   clearKeepaliveTimer();
   disposeResourceMonitor?.();
-  disposeResourceMonitor = mountResourceMonitor(currentApp, api);
+  disposeResourceMonitor = mountResourceMonitor(currentApp, api, {
+    clearControlsDeps: {
+      fetchApi: (path: string, options?: RequestInit) => api.fetchApi(path, options),
+      toastAdd: (msg) => currentApp?.extensionManager.toast.add(msg),
+    },
+  });
   queueConfigure(true);
   keepaliveTimer = window.setInterval(() => {
     queueConfigure(false);

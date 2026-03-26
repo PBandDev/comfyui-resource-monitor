@@ -16,4 +16,5 @@ export const SETTINGS_IDS = {
   SHOW_GPU: `${SETTINGS_PREFIX}.Show GPU`,
   SHOW_VRAM: `${SETTINGS_PREFIX}.Show VRAM`,
   SHOW_GPU_TEMP: `${SETTINGS_PREFIX}.Show GPU Temp`,
+  SHOW_CLEAR_BUTTONS: `${SETTINGS_PREFIX}.Show Clear Buttons`,
 } as const;

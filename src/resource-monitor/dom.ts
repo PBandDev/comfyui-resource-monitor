@@ -4,6 +4,7 @@ import type { MetricRow } from "./store";
 export interface ResourceMonitorDom {
   root: HTMLDivElement;
   attachTo(target: HTMLElement | null): void;
+  attachTooltip(container: HTMLElement): void;
   setExpanded(expanded: boolean): void;
   setMode(mode: DisplayMode): void;
   setSmoothTransitions(enabled: boolean): void;
@@ -104,8 +105,23 @@ function createTooltipManager(): {
     tip.classList.add("rm-tooltip--visible");
 
     const rect = target.getBoundingClientRect();
-    tip.style.left = `${rect.left + rect.width / 2}px`;
-    tip.style.top = `${rect.top - 4}px`;
+    const tipRect = tip.getBoundingClientRect();
+    const vw = window.innerWidth;
+
+    let left = rect.left + rect.width / 2;
+    const top = rect.top - 4;
+
+    // Clamp horizontally so the tooltip stays inside the viewport
+    const halfTip = tipRect.width / 2;
+    const pad = 6;
+    if (left - halfTip < pad) {
+      left = pad + halfTip;
+    } else if (left + halfTip > vw - pad) {
+      left = vw - pad - halfTip;
+    }
+
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
     tip.style.transform = "translate(-50%, -100%)";
   }
 
@@ -116,35 +132,39 @@ function createTooltipManager(): {
     }, 50);
   }
 
+  function findTooltipTarget(el: HTMLElement): HTMLElement | null {
+    const row = el.closest?.(".rm-row");
+    if (row instanceof HTMLElement && row.dataset.tooltip) return row;
+    const btn = el.closest?.(".rm-clear-btn");
+    if (btn instanceof HTMLElement && btn.dataset.tooltip) return btn;
+    return null;
+  }
+
   function handleMouseOver(event: MouseEvent): void {
-    const row = (event.target as HTMLElement).closest?.(".rm-row");
-    if (row instanceof HTMLElement && row.dataset.tooltip) {
-      show(row);
-    }
+    const target = findTooltipTarget(event.target as HTMLElement);
+    if (target) show(target);
   }
 
   function handleMouseOut(event: MouseEvent): void {
-    const row = (event.target as HTMLElement).closest?.(".rm-row");
-    if (row instanceof HTMLElement) {
-      hide();
-    }
+    const target = findTooltipTarget(event.target as HTMLElement);
+    if (target) hide();
   }
 
-  let attachedContainer: HTMLElement | null = null;
+  const attachedContainers = new Set<HTMLElement>();
 
   return {
     attach(container: HTMLElement) {
-      if (attachedContainer === container) return;
-      attachedContainer?.removeEventListener("mouseover", handleMouseOver);
-      attachedContainer?.removeEventListener("mouseout", handleMouseOut);
-      attachedContainer = container;
+      if (attachedContainers.has(container)) return;
+      attachedContainers.add(container);
       container.addEventListener("mouseover", handleMouseOver);
       container.addEventListener("mouseout", handleMouseOut);
     },
     detach() {
-      attachedContainer?.removeEventListener("mouseover", handleMouseOver);
-      attachedContainer?.removeEventListener("mouseout", handleMouseOut);
-      attachedContainer = null;
+      for (const c of attachedContainers) {
+        c.removeEventListener("mouseover", handleMouseOver);
+        c.removeEventListener("mouseout", handleMouseOut);
+      }
+      attachedContainers.clear();
       tooltipEl?.remove();
       tooltipEl = null;
     },
@@ -187,6 +207,9 @@ export function createResourceMonitorDom(
 
   return {
     root,
+    attachTooltip(container: HTMLElement) {
+      tooltip.attach(container);
+    },
     attachTo(target: HTMLElement | null) {
       if (target === null) {
         root.remove();

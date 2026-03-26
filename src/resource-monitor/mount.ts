@@ -16,6 +16,11 @@ import {
   resolveExpandedState,
   selectMetricRows,
 } from "./store";
+import {
+  createClearControls,
+  type ClearControlsDeps,
+  type ClearControlsHandle,
+} from "./clear-controls";
 import type { ResourceMonitorSettingsValues, ResourceSnapshot } from "./types";
 
 const STYLE_ELEMENT_ID = "resource-monitor-inline-styles";
@@ -55,6 +60,11 @@ function readMonitorSettings(app: ComfyApp): ResourceMonitorSettingsValues {
       SETTINGS_IDS.SHOW_GPU_TEMP,
       DEFAULT_SETTINGS.showGpuTemp,
     ),
+    showClearButtons: readSetting(
+      app,
+      SETTINGS_IDS.SHOW_CLEAR_BUTTONS,
+      DEFAULT_SETTINGS.showClearButtons,
+    ),
     debugLogging: readSetting(
       app,
       SETTINGS_IDS.DEBUG_LOGGING,
@@ -63,22 +73,33 @@ function readMonitorSettings(app: ComfyApp): ResourceMonitorSettingsValues {
   };
 }
 
+export interface MountResourceMonitorOptions {
+  clearControlsDeps?: Omit<ClearControlsDeps, "showClearButtons">;
+}
+
 function renderMonitor(
   settings: ResourceMonitorSettingsValues,
   dom: ResourceMonitorDom,
   snapshot: ResourceSnapshot | null,
   expanded: boolean,
+  clearControls: ClearControlsHandle | null,
 ): void {
-  dom.attachTo(resolveMonitorMountTarget(settings.displayMode));
+  const target = resolveMonitorMountTarget(settings.displayMode);
+  dom.attachTo(target);
   dom.setMode(settings.displayMode);
   dom.setExpanded(expanded);
   dom.setSmoothTransitions(settings.smoothTransitions);
   dom.renderRows(selectMetricRows(snapshot, settings));
+
+  if (clearControls && target && clearControls.root.parentElement !== target) {
+    target.appendChild(clearControls.root);
+  }
 }
 
 export function mountResourceMonitor(
   app: ComfyApp,
   api: ResourceMonitorApiClient,
+  options: MountResourceMonitorOptions = {},
 ): () => void {
   ensureMonitorStyles();
 
@@ -87,6 +108,20 @@ export function mountResourceMonitor(
   let currentDisplayMode: ResourceMonitorSettingsValues["displayMode"] | null = null;
   let isExpanded = resolveExpandedState(false, null, currentSettings.displayMode);
   let layoutRefreshQueued = false;
+  let clearControls: ClearControlsHandle | null = null;
+
+  function rebuildClearControls(): ClearControlsHandle | null {
+    clearControls?.dispose();
+    clearControls = null;
+
+    if (!options.clearControlsDeps) return null;
+
+    clearControls = createClearControls({
+      ...options.clearControlsDeps,
+      showClearButtons: currentSettings.showClearButtons,
+    });
+    return clearControls;
+  }
 
   const dom = createResourceMonitorDom({
     onExpandedChange(expanded) {
@@ -95,14 +130,23 @@ export function mountResourceMonitor(
   });
 
   const refreshView = (): void => {
+    const prevShowClearButtons = currentSettings.showClearButtons;
     currentSettings = readMonitorSettings(app);
+
+    if (currentSettings.showClearButtons !== prevShowClearButtons) {
+      const rebuilt = rebuildClearControls();
+      if (rebuilt) {
+        dom.attachTooltip(rebuilt.root);
+      }
+    }
+
     isExpanded = resolveExpandedState(
       isExpanded,
       currentDisplayMode,
       currentSettings.displayMode,
     );
     currentDisplayMode = currentSettings.displayMode;
-    renderMonitor(currentSettings, dom, currentSnapshot, isExpanded);
+    renderMonitor(currentSettings, dom, currentSnapshot, isExpanded, clearControls);
   };
 
   const requestLayoutRefresh = (): void => {
@@ -146,11 +190,16 @@ export function mountResourceMonitor(
     applyPatch(patch);
   });
 
+  const initialClearControls = rebuildClearControls();
+  if (initialClearControls) {
+    dom.attachTooltip(initialClearControls.root);
+  }
   refreshView();
 
   return () => {
     unsubscribe();
     layoutObserver.disconnect();
+    clearControls?.dispose();
     dom.dispose();
     dom.attachTo(null);
     dom.root.remove();
