@@ -7,7 +7,10 @@ import {
   type ResourceMonitorApiClient,
   RESOURCE_MONITOR_EVENT_NAME,
 } from "./resource-monitor/api";
-import { mountResourceMonitor } from "./resource-monitor/mount";
+import {
+  mountResourceMonitor,
+  type ResourceMonitorHandle,
+} from "./resource-monitor/mount";
 import {
   DEFAULT_SETTINGS,
   createResourceMonitorSettings,
@@ -22,7 +25,7 @@ declare global {
   }
 }
 
-let disposeResourceMonitor: (() => void) | null = null;
+let resourceMonitor: ResourceMonitorHandle | null = null;
 let currentApp: ComfyApp | null = null;
 let configureSequence = 0;
 let pendingConfigure: Promise<void> = Promise.resolve();
@@ -110,8 +113,8 @@ function remountResourceMonitor(): void {
   }
 
   clearKeepaliveTimer();
-  disposeResourceMonitor?.();
-  disposeResourceMonitor = mountResourceMonitor(currentApp, api, {
+  resourceMonitor?.dispose();
+  resourceMonitor = mountResourceMonitor(currentApp, api, {
     clearControlsDeps: {
       fetchApi: (path: string, options?: RequestInit) => api.fetchApi(path, options),
       toastAdd: (msg) => currentApp?.extensionManager.toast.add(msg),
@@ -123,10 +126,19 @@ function remountResourceMonitor(): void {
   }, KEEPALIVE_INTERVAL_MS);
 }
 
+function handleSettingChange(): void {
+  if (resourceMonitor) {
+    resourceMonitor.refresh();
+    queueConfigure(true);
+  } else {
+    remountResourceMonitor();
+  }
+}
+
 app.registerExtension({
   name: EXTENSION_NAME,
   settings: createResourceMonitorSettings(() => {
-    remountResourceMonitor();
+    handleSettingChange();
   }),
   setup(app: ComfyApp) {
     currentApp = app;

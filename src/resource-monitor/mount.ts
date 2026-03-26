@@ -96,11 +96,16 @@ function renderMonitor(
   }
 }
 
+export interface ResourceMonitorHandle {
+  dispose: () => void;
+  refresh: () => void;
+}
+
 export function mountResourceMonitor(
   app: ComfyApp,
   api: ResourceMonitorApiClient,
   options: MountResourceMonitorOptions = {},
-): () => void {
+): ResourceMonitorHandle {
   ensureMonitorStyles();
 
   let currentSnapshot: ResourceSnapshot | null = null;
@@ -109,6 +114,7 @@ export function mountResourceMonitor(
   let isExpanded = resolveExpandedState(false, null, currentSettings.displayMode);
   let layoutRefreshQueued = false;
   let clearControls: ClearControlsHandle | null = null;
+  let isDisposed = false;
 
   function rebuildClearControls(): ClearControlsHandle | null {
     clearControls?.dispose();
@@ -130,6 +136,8 @@ export function mountResourceMonitor(
   });
 
   const refreshView = (): void => {
+    if (isDisposed) return;
+
     const prevShowClearButtons = currentSettings.showClearButtons;
     currentSettings = readMonitorSettings(app);
 
@@ -150,18 +158,19 @@ export function mountResourceMonitor(
   };
 
   const requestLayoutRefresh = (): void => {
-    if (layoutRefreshQueued) {
+    if (layoutRefreshQueued || isDisposed) {
       return;
     }
 
     layoutRefreshQueued = true;
     requestAnimationFrame(() => {
       layoutRefreshQueued = false;
-      refreshView();
+      if (!isDisposed) refreshView();
     });
   };
 
   const applyPatch = (patch: Partial<ResourceSnapshot> | null): void => {
+    if (isDisposed) return;
     currentSnapshot = reduceSnapshot(currentSnapshot, patch);
     refreshView();
   };
@@ -196,12 +205,16 @@ export function mountResourceMonitor(
   }
   refreshView();
 
-  return () => {
-    unsubscribe();
-    layoutObserver.disconnect();
-    clearControls?.dispose();
-    dom.dispose();
-    dom.attachTo(null);
-    dom.root.remove();
+  return {
+    dispose() {
+      isDisposed = true;
+      unsubscribe();
+      layoutObserver.disconnect();
+      clearControls?.dispose();
+      dom.dispose();
+      dom.attachTo(null);
+      dom.root.remove();
+    },
+    refresh: refreshView,
   };
 }
