@@ -1,6 +1,6 @@
 {
   "name": "comfyui-resource-monitor",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A ComfyUI-native live resource monitor and snapshot node",
   "type": "module",
   "scripts": {
